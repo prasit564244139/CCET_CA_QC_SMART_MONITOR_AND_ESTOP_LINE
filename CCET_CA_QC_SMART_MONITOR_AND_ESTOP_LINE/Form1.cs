@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Json2DataTable;
+using iTextSharp.text.pdf;
+using System.IO;
 
 namespace CCET_CA_QC_SMART_MONITOR_AND_ESTOP_LINE
 {
@@ -30,6 +32,74 @@ namespace CCET_CA_QC_SMART_MONITOR_AND_ESTOP_LINE
         private void label1_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Load the PDF file
+            PdfReader reader = new PdfReader("input.pdf");
+            using (FileStream fs = new FileStream("output.pdf", FileMode.Create))
+            {
+                // Create a PDF stamper object to write changes to the PDF
+                PdfStamper stamper = new PdfStamper(reader, fs);
+
+                // Iterate through each page of the PDF
+                for (int i = 1; i <= reader.NumberOfPages; i++)
+                {
+                    // Get the current page
+                    PdfDictionary page = reader.GetPageN(i);
+
+                    // Create a content stream to add text to the page
+                    PdfContentByte cb = stamper.GetOverContent(i);
+
+                    // Set the font and size for the text
+                    BaseFont bf = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                    cb.SetFontAndSize(bf, 12);
+
+
+                    // Set the position for the text
+                    cb.BeginText();
+                    float pageHeight = reader.GetPageSizeWithRotation(i).Height;
+
+                    /////// TIME/DATE
+                    cb.SetTextMatrix(147, pageHeight - 131);
+                    DateTime now = DateTime.Now;
+                    string formattedDate = now.ToString("yyyy-MM-dd");
+                    string formattedTime = now.ToString("HH:mm:ss");
+                    cb.ShowText(formattedTime.ToString() + " / " + formattedDate.ToString());
+
+                    ////// MODEL
+                    cb.SetTextMatrix(370, pageHeight - 131);
+                    cb.ShowText("RSHH17RR");
+
+                    ////// LINE NO
+                    cb.SetTextMatrix(147, pageHeight - 146);
+                    cb.ShowText("B2");
+
+                    ////// LINE NO
+                    cb.SetTextMatrix(370, pageHeight - 146);
+                    cb.ShowText("B870339");
+
+
+
+                    cb.SetTextMatrix(0, pageHeight - 40); // Set the x-coordinate to 100 and the y-coordinate to the top of the page minus 100
+
+                    // End the text object
+                    cb.EndText();
+                }
+
+                // Close the PDF stamper object
+                stamper.Close();
+            }
+
+            try
+            {
+                System.Diagnostics.Process.Start("output.pdf");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
         public void Query_DT(String DB, String SQL)
